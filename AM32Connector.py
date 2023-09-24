@@ -1,7 +1,5 @@
 import time
 
-from constants import ESC_INIT_STRING, AIR_START_EEPROM
-
 
 class AM32Connector:
     """
@@ -13,15 +11,24 @@ class AM32Connector:
 
     ACK = 0x30
     ESC_TYPE_G071ESC_2KB_PAGE = 0x2b
+    ESC_TYPE_G071_EEPROM_ADDRESS = 0x7e00
     ESC_TYPE_F0ESC_1KB_PAGE = 0x1f
+    ESC_TYPE_F0ESC_EEPROM_ADDRESS = 0x7c00
     ESC_TYPE_F3ESC_2KB_PAGE = 0x35
+    ESC_TYPE_F3ESC_EEPROM_ADDRESS = 0xF800
     ESC_SEND_RETRIES = 8
+    ESC_INIT_STRING = bytearray(
+        [
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x0D, ord('B'), ord('L'),
+            ord('H'), ord('e'), ord('l'), ord('i'), 0xF4, 0x7D
+        ]
+    )
+
     FLASH_START_ADDRESS = 4096
     CHUNK_SIZE = 128
     EEPROM_SIZE = 48
 
-    def __init__(self, port_name=None, serial_port_instance=None, baudrate=19200, wait_after_write=0.025):
-        self.port_name = port_name
+    def __init__(self, serial_port_instance=None, baudrate=19200, wait_after_write=0.025):
         self.baudrate = baudrate
         self.wait_after_write = wait_after_write
         self.serial_port = serial_port_instance     # serial_device_name of serial.Serial()
@@ -38,9 +45,6 @@ class AM32Connector:
         self._flash_file_name = ""
         self.chunks_written = 0
 
-        # initialize serial port and ESC
-        if self.serial_port is None:
-            self._open_port()
         self._init_esc()
 
     def _load_bin_to_chunks(self, filename):
@@ -56,6 +60,7 @@ class AM32Connector:
             raise FileNotFoundError("No ESC connected!")
 
         if len(eeprom_bytearray) != self.EEPROM_SIZE:
+            print("eeprom size mismatch, %s expected, %s received" % (self.EEPROM_SIZE, len(eeprom_bytearray)))
             raise ValueError(
                 "eeprom size mismatch, %s expected, %s received" % (self.EEPROM_SIZE, len(eeprom_bytearray))
             )
@@ -64,12 +69,14 @@ class AM32Connector:
         while True:
             res = self._send_direct(eeprom_bytearray, self.eeprom_address, send_eeprom=True)
             if res == len(eeprom_bytearray):
+                print("eeprom written successfully")
                 return res
             else:
                 print("Retrying!")
 
             tries += 1
             if tries > self.ESC_SEND_RETRIES:
+                print("Max retries reached writing eeprom!")
                 raise ConnectionError("ESC communication problem!")
 
     def write_firmware(self, filename):
@@ -106,13 +113,6 @@ class AM32Connector:
     def cmd_read_eeprom(self):
         return self._read_direct(self.EEPROM_SIZE, self.eeprom_address, read_eeprom=True)
 
-    def _open_port(self):
-        # open serial port to ESC and flush any garbage in the UART
-        if self.serial_port is None:
-            import serial
-            self.serial_port = serial.Serial(port=self.port_name, baudrate=self.baudrate)
-            self.serial_port.flushInput()
-
     def _receive_ack(self):
         """
         This method tries to receive an ack byte from the serial port
@@ -140,7 +140,7 @@ class AM32Connector:
         tries = 0;
         while True:
             # send init string to reset ESC (4x "\x0" -> RESET)
-            self.serial_port.write(ESC_INIT_STRING)
+            self.serial_port.write(self.ESC_INIT_STRING)
 
             if self._receive_ack():
                 break
@@ -159,19 +159,19 @@ class AM32Connector:
         # check which ESC type has answered us and set ESC info accordingly
         if self.last_result[-5] == self.ESC_TYPE_G071ESC_2KB_PAGE:
             self.esc_type = self.ESC_TYPE_G071ESC_2KB_PAGE
-            self.eeprom_address = 0x7e00
+            self.eeprom_address = self.ESC_TYPE_G071_EEPROM_ADDRESS
             self.memory_divider_required_four = True
             return True
 
         if self.last_result[-5] == self.ESC_TYPE_F0ESC_1KB_PAGE:
             self.esc_type = self.ESC_TYPE_F0ESC_1KB_PAGE
-            self.eeprom_address = 0x7c00
+            self.eeprom_address = self.ESC_TYPE_F0ESC_EEPROM_ADDRESS
             self.memory_divider_required_four = False
             return True
 
         if self.last_result[-5] == self.ESC_TYPE_F3ESC_2KB_PAGE:
             self.esc_type = self.ESC_TYPE_F3ESC_2KB_PAGE
-            self.eeprom_address = 0xF800
+            self.eeprom_address = self.ESC_TYPE_F3ESC_EEPROM_ADDRESS
             self.memory_divider_required_four = False
             return True
 

@@ -72,7 +72,9 @@ class AM32ConftoolApp(App):
         print("callback_button_serial_device", self, instance.text)
         serial_device_name = instance.text
         self.open_serial_port(serial_device_name)
+        print("SERIAL open done")
         self.connect_esc()
+        print("connect esc done")
 
         # after connecting, update the local eeprom data with the real data from the esc
         self.eeprom = AM32eeprom(eeprom_bytearray=self.esc.cmd_read_eeprom())
@@ -124,9 +126,8 @@ class AM32ConftoolApp(App):
                 timeout=1
             )
 
-
     def connect_esc(self):
-        self.esc = AM32Connector(serial_port_instance=self.serial_port)
+        self.esc = AM32Connector(serial_port_instance=self.serial_port, wait_after_write=0.1)
 
     @staticmethod
     def create_configitem_layout_page():
