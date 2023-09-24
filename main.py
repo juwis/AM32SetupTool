@@ -127,7 +127,7 @@ class AM32ConftoolApp(App):
             )
 
     def connect_esc(self):
-        self.esc = AM32Connector(serial_port_instance=self.serial_port, wait_after_write=0.1)
+        self.esc = AM32Connector(serial_port_instance=self.serial_port, wait_after_write=0.03)
 
     @staticmethod
     def create_configitem_layout_page():
