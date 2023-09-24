@@ -46,7 +46,10 @@ class AM32ConftoolApp(App):
 
     def callback_button_save(self, instance):
         print("callback_button_save", self, instance.state)
-        self.esc.write_eeprom(self.eeprom.get_eeprom_bytearray())
+        try:
+            self.esc.write_eeprom(self.eeprom.get_eeprom_bytearray())
+        except Exception as e:
+            print("Exception: %s" % str(e))
 
     def callback_button_update_usb_list(self, instance):
         print("callback_button_update_usb_list", self, instance.state)
