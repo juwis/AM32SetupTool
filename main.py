@@ -9,6 +9,8 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.slider import Slider
 from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelItem
 from kivy.uix.scrollview import ScrollView
+from kivy.core.window import Window
+from threading import Thread
 
 from kivy.utils import platform
 if platform == 'android':
@@ -68,7 +70,32 @@ class AM32ConftoolApp(App):
 
     def callback_button_serial_device(self, instance):
         print("callback_button_serial_device", self, instance.text)
-        device_name = instance.text
+        serial_device_name = instance.text
+        self.open_serial_port(serial_device_name)
+        self.connect_esc()
+
+        # after connecting, update the local eeprom data with the real data from the esc
+        self.eeprom = AM32eeprom(eeprom_bytearray=self.esc.cmd_read_eeprom())
+
+        # no more need to connect a device, disable buttons
+        self.root.ids.bl_usb_serial_devices.clear_widgets()
+        self.root.ids.b_update_usb_list.disabled = True
+        self.root.ids.l_usb_devices.text = "Connected to %s" % self.eeprom
+
+        # show the config tabs
+        self.create_config_tabs()
+        for name in self.pages:
+            tab_item = TabbedPanelItem(text=name)
+            scrollview = ScrollView(size_hint=(1, None), size=(Window.width, Window.height))
+            scrollview.add_widget(self.pages[name])
+            tab_item.add_widget(scrollview)
+            self.root.ids.tp_main.add_widget(tab_item)
+
+        # and enable the save button
+        self.root.ids.b_save_to_esc.disabled = False
+
+    def open_serial_port(self, serial_device_name):
+        device_name = serial_device_name
 
         if platform == 'android':
             device = usb.get_usb_device(device_name)
@@ -97,29 +124,9 @@ class AM32ConftoolApp(App):
                 timeout=1
             )
 
-        self.connect_esc()
 
     def connect_esc(self):
         self.esc = AM32Connector(serial_port_instance=self.serial_port)
-        # reload eeprom with esc config values
-        self.eeprom = AM32eeprom(eeprom_bytearray=self.esc.cmd_read_eeprom())
-
-        # no more need to connect a device, disable buttons
-        self.root.ids.bl_usb_serial_devices.clear_widgets()
-        self.root.ids.b_update_usb_list.disabled = True
-        self.root.ids.l_usb_devices.text = "Connected to %s" % self.eeprom
-
-        # show the config tabs
-        self.create_config_tabs()
-        for name in self.pages:
-            tab_item = TabbedPanelItem(text=name)
-            scrollview = ScrollView(size_hint=(1, None), size=(self.root_window.width, self.root_window.height))
-            scrollview.add_widget(self.pages[name])
-            tab_item.add_widget(scrollview)
-            self.root.ids.tp_main.add_widget(tab_item)
-
-        # and enable the save button
-        self.root.ids.b_save_to_esc.disabled = False
 
     @staticmethod
     def create_configitem_layout_page():

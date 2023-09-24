@@ -24,7 +24,7 @@ class AM32Connector:
         self.port_name = port_name
         self.baudrate = baudrate
         self.wait_after_write = wait_after_write
-        self.serial_port = serial_port_instance     # instance of serial.Serial()
+        self.serial_port = serial_port_instance     # serial_device_name of serial.Serial()
 
         self.last_result = None
         self.ack_received = False
