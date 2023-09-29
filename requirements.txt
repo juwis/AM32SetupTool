@@ -1,6 +1,6 @@
 # for AM32SetupTool
 kivy
-serial
+pyserial
 # Android stuff
 pyjnius
 usb4a

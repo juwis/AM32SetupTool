@@ -1,3 +1,15 @@
+#!python3
+# -*- coding: utf-8 -*-
+
+"""
+    AM32 ESC Setup and Configuration Tool.
+    Writes flash and eeprom
+
+    Copyright Julian Wingert, 2023, Licensed under the GPL V3
+"""
+
+import os
+
 import threading
 
 from kivy.app import App
@@ -17,7 +29,6 @@ from kivy.properties import ObjectProperty
 from kivy.uix.popup import Popup
 from kivy.clock import Clock
 
-import os
 from kivy.utils import platform
 if platform == 'android':
     from usb4a import usb
@@ -28,6 +39,14 @@ else:
 
 from AM32eeprom import AM32eeprom
 from AM32Connector import AM32Connector
+
+
+__author__ = 'Julian Wingert'
+__copyright__ = 'Copyright 2023, AM32 ESC Setup Tool'
+__license__ = 'GPL V3'
+__version__ = '0.1'
+__maintainer__ = 'Julian Wingert'
+__status__ = 'testing'
 
 
 class AM32ConftoolLayout(Widget):

@@ -1,4 +1,22 @@
+#!python3
+# -*- coding: utf-8 -*-
+
+"""
+    Class for AM32 ESC Bootloader connection.
+    Writes (and reads*) flash and eeprom
+
+    Copyright Julian Wingert, 2023, Licensed under the GPL V3
+"""
+
 import time
+
+
+__author__ = 'Julian Wingert'
+__copyright__ = 'Copyright 2023, AM32 ESC Setup Tool'
+__license__ = 'GPL V3'
+__version__ = '0.1'
+__maintainer__ = 'Julian Wingert'
+__status__ = 'testing'
 
 
 class AM32Connector:
