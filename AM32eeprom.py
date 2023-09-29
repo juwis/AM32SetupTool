@@ -1,6 +1,21 @@
+#!python3
+# -*- coding: utf-8 -*-
+
 """
-This represents the eeprom in the AM32 ESC. All bytes are documented and explained
+    This represents the eeprom in the AM32 ESC. All bytes are documented and explained
+
+    Copyright Julian Wingert, 2023, Licensed under the GPL V3
 """
+
+import time
+
+
+__author__ = 'Julian Wingert'
+__copyright__ = 'Copyright 2023, AM32 ESC Setup Tool'
+__license__ = 'GPL V3'
+__version__ = '0.1'
+__maintainer__ = 'Julian Wingert'
+__status__ = 'testing'
 
 
 class AM32eeprom:
