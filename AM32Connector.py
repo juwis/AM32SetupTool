@@ -110,6 +110,11 @@ class AM32Connector:
             self.chunks_written += 1
             print("%03ds: %04d/%04d" % (int(time.time() - start_time), self.chunks_written, self._flash_file_num_chunks))
 
+    def get_flash_done_percentage(self):
+        if self.chunks_written == 0:
+            return 0
+        return int((self.chunks_written / self._flash_file_num_chunks) * 100)
+
     def cmd_read_eeprom(self):
         return self._read_direct(self.EEPROM_SIZE, self.eeprom_address, read_eeprom=True)
 

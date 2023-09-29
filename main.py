@@ -1,3 +1,5 @@
+import threading
+
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.uix.boxlayout import BoxLayout
@@ -10,8 +12,12 @@ from kivy.uix.slider import Slider
 from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelItem
 from kivy.uix.scrollview import ScrollView
 from kivy.core.window import Window
-from threading import Thread
+from kivy.uix.floatlayout import FloatLayout
+from kivy.properties import ObjectProperty
+from kivy.uix.popup import Popup
+from kivy.clock import Clock
 
+import os
 from kivy.utils import platform
 if platform == 'android':
     from usb4a import usb
@@ -28,6 +34,24 @@ class AM32ConftoolLayout(Widget):
     pass
 
 
+class LoadDialog(FloatLayout):
+    load = ObjectProperty(None)
+    cancel = ObjectProperty(None)
+
+
+def get_download_path():
+    """Returns the default downloads path for linux or windows"""
+    if os.name == 'nt':
+        import winreg
+        sub_key = r'SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders'
+        downloads_guid = '{374DE290-123F-4565-9164-39C4925E467B}'
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, sub_key) as key:
+            location = winreg.QueryValueEx(key, downloads_guid)[0]
+        return location
+    else:
+        return os.path.join(os.path.expanduser('~'), 'downloads')
+
+
 class AM32ConftoolApp(App):
     def __init__(self):
         App.__init__(self)
@@ -40,6 +64,7 @@ class AM32ConftoolApp(App):
         self.checkbox_list = [None] * len(self.eeprom.EEPROM)
         self.select_input_list = [None] * len(self.eeprom.EEPROM)
         self.pages = {}
+        self.fw_file_full_path = None
 
     def build(self):
         return AM32ConftoolLayout()
@@ -93,11 +118,54 @@ class AM32ConftoolApp(App):
             tab_item = TabbedPanelItem(text=name)
             scrollview = ScrollView(size_hint=(1, None), size=(Window.width, Window.height))
             scrollview.add_widget(self.pages[name])
-            tab_item.add_widget(scrollview)
+            tab_item.add_widget(self.pages[name])
             self.root.ids.tp_main.add_widget(tab_item)
 
-        # and enable the save button
+        # and enable the save button and the firmware tab
         self.root.ids.b_save_to_esc.disabled = False
+        self.root.ids.tpi_firmware.disabled = False
+
+    def callback_button_fw_file(self, instance):
+        self.content = LoadDialog(load=self.load_fw_file, cancel=self.dismiss_popup)
+        self.content.ids.filechooser.path = get_download_path()
+        self._popup = Popup(title="Load file", content=self.content,
+                            size_hint=(0.9, 0.9))
+        self._popup.open()
+
+    def dismiss_popup(self):
+        self._popup.dismiss()
+
+    def load_fw_file(self, path, filename):
+        if len(filename) == 0:
+            return
+
+        self.fw_file_full_path = os.path.join(path, filename[0])
+
+        if os.path.isfile(self.fw_file_full_path):
+            self.root.ids.l_flash_fw_filename.text = "FLASH FROM: '%s'" % os.path.basename(filename[0])
+            self.root.ids.b_flash_firmware_file.disabled = False
+            self.dismiss_popup()
+        else:
+            self.fw_file_full_path = None
+
+    def callback_button_flash_fw_file(self, instance):
+        # disable flash button and save button to prevent threading chaos
+        self.root.ids.b_flash_firmware_file.disabled = True
+        self.root.ids.b_save_to_esc.disabled = True
+
+        threading.Thread(target=self.esc.write_firmware, args=(self.fw_file_full_path,)).start()
+        Clock.schedule_interval(self.callback_update_flash_loadbar, 1)
+
+    def callback_update_flash_loadbar(self, dt):
+        percent_done = self.esc.get_flash_done_percentage()
+        print(percent_done)
+        self.root.ids.pb_flash_fw_file.value = percent_done
+        if percent_done == 100:
+            self.root.ids.l_flash_fw_filename.text = "Flash written!"
+            self.root.ids.b_save_to_esc.disabled = False
+            return False
+        else:
+            return True
 
     def open_serial_port(self, serial_device_name):
         device_name = serial_device_name
@@ -130,7 +198,7 @@ class AM32ConftoolApp(App):
             )
 
     def connect_esc(self):
-        self.esc = AM32Connector(serial_port_instance=self.serial_port, wait_after_write=0.03)
+        self.esc = AM32Connector(serial_port_instance=self.serial_port)
 
     @staticmethod
     def create_configitem_layout_page():

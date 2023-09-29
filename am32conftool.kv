@@ -22,7 +22,29 @@
                         text: "no Adapter found"
                     BoxLayout:
                         id: bl_usb_serial_devices
-                        orientation: "vertical"
+
+            TabbedPanelItem:
+                text: "Firmware"
+                id: tpi_firmware
+                disabled: True
+                BoxLayout:
+                    orientation: "vertical"
+                    Button:
+                        id: b_open_firmware_file_dialog
+                        text: "open FW file"
+                        on_press: app.callback_button_fw_file(self)
+                    Label:
+                        id: l_flash_fw_filename
+                        text: "no fw file loaded"
+                    ProgressBar:
+                        id: pb_flash_fw_file
+                        max: 100
+                        value: 0
+                    Button:
+                        id: b_flash_firmware_file
+                        text: "flash firmware"
+                        disabled: True
+                        on_press: app.callback_button_flash_fw_file(self)
 
         Button:
             id: b_save_to_esc
@@ -30,3 +52,21 @@
             text: "save changes"
             disabled: True
             on_press: app.callback_button_save(self)
+
+<LoadDialog>:
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "vertical"
+        FileChooserListView:
+            id: filechooser
+            filters: ["*.bin"]
+        BoxLayout:
+            size_hint_y: 0.2
+            Button:
+                text: "Cancel"
+                on_release: root.cancel()
+
+            Button:
+                text: "Load"
+                on_release: root.load(filechooser.path, filechooser.selection)
