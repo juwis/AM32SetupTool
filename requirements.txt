@@ -1,0 +1,7 @@
+# for AM32SetupTool
+kivy
+serial
+# Android stuff
+pyjnius
+usb4a
+usbserial4a
