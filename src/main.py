@@ -71,7 +71,7 @@ def get_download_path():
         return os.path.join(os.path.expanduser('~'), 'downloads')
 
 
-class AM32ConftoolApp(App):
+class AM32SetupToolApp(App):
     def __init__(self):
         App.__init__(self)
         self.device_name_list = []
@@ -330,4 +330,4 @@ class AM32ConftoolApp(App):
 
 
 if __name__ == '__main__':
-    AM32ConftoolApp().run()
+    AM32SetupToolApp().run()

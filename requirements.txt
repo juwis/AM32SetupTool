@@ -2,6 +2,5 @@
 kivy
 pyserial
 # Android stuff
-pyjnius
 usb4a
 usbserial4a
