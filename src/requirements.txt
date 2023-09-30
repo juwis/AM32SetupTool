@@ -1,6 +1,3 @@
 # for AM32SetupTool
 kivy
 pyserial
-# Android stuff
-usb4a
-usbserial4a
