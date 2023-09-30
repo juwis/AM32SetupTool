@@ -2,9 +2,9 @@ name: Package exe with PyInstaller - Windows
 
 on:
   push:
-    branches: [ main ]
+    branches: [ mppt ]
   pull_request:
-    branches: [ main ]
+    branches: [ mppt ]
 
 jobs:
   build:
