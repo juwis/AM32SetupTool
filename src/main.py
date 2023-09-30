@@ -137,7 +137,7 @@ class AM32SetupToolApp(App):
             tab_item = TabbedPanelItem(text=name)
             scrollview = ScrollView(size_hint=(1, None), size=(Window.width, Window.height))
             scrollview.add_widget(self.pages[name])
-            tab_item.add_widget(self.pages[name])
+            tab_item.add_widget(scrollview)
             self.root.ids.tp_main.add_widget(tab_item)
 
         # and enable the save button and the firmware tab
