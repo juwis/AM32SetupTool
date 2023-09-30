@@ -1,0 +1,72 @@
+#:kivy 1.4
+<AM32ConftoolLayout>
+    GridLayout:
+        size: root.width, root.height
+        cols: 1
+        rows: 2
+        TabbedPanel:
+            do_default_tab: False
+            id: tp_main
+            TabbedPanelItem:
+                text: "ESC"
+                BoxLayout:
+                    orientation: "vertical"
+                    Label:
+                        text: "AM32 ESC Configurator"
+                    Button:
+                        id: b_update_usb_list
+                        text: "Update USB Adapter List"
+                        on_press: app.callback_button_update_usb_list(self)
+                    Label:
+                        id: l_usb_devices
+                        text: "no Adapter found"
+                    BoxLayout:
+                        id: bl_usb_serial_devices
+
+            TabbedPanelItem:
+                text: "Firmware"
+                id: tpi_firmware
+                disabled: True
+                BoxLayout:
+                    orientation: "vertical"
+                    Button:
+                        id: b_open_firmware_file_dialog
+                        text: "open FW file"
+                        on_press: app.callback_button_fw_file(self)
+                    Label:
+                        id: l_flash_fw_filename
+                        text: "no fw file loaded"
+                    ProgressBar:
+                        id: pb_flash_fw_file
+                        max: 100
+                        value: 0
+                    Button:
+                        id: b_flash_firmware_file
+                        text: "flash firmware"
+                        disabled: True
+                        on_press: app.callback_button_flash_fw_file(self)
+
+        Button:
+            id: b_save_to_esc
+            size_hint: 1, 0.1
+            text: "save changes"
+            disabled: True
+            on_press: app.callback_button_save(self)
+
+<LoadDialog>:
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "vertical"
+        FileChooserListView:
+            id: filechooser
+            filters: ["*.bin"]
+        BoxLayout:
+            size_hint_y: 0.2
+            Button:
+                text: "Cancel"
+                on_release: root.cancel()
+
+            Button:
+                text: "Load"
+                on_release: root.load(filechooser.path, filechooser.selection)
