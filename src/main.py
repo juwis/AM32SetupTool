@@ -90,10 +90,18 @@ class AM32SetupToolApp(App):
 
     def callback_button_save(self, instance):
         print("callback_button_save", self, instance.state)
+        self.root.ids.b_save_to_esc.disabled = True
+        self.root.ids.b_save_to_esc.text = "writing EEPROM"
+        Clock.schedule_once(self.callback_write_eeprom)
+
+    def callback_write_eeprom(self, dt):
         try:
             self.esc.write_eeprom(self.eeprom.get_eeprom_bytearray())
         except Exception as e:
             print("Exception: %s" % str(e))
+        self.root.ids.b_save_to_esc.disabled = False
+        self.root.ids.b_save_to_esc.text = "save changes"
+
 
     def callback_button_update_usb_list(self, instance):
         print("callback_button_update_usb_list", self, instance.state)
@@ -137,7 +145,7 @@ class AM32SetupToolApp(App):
             tab_item = TabbedPanelItem(text=name)
             scrollview = ScrollView(size_hint=(1, None), size=(Window.width, Window.height))
             scrollview.add_widget(self.pages[name])
-            tab_item.add_widget(self.pages[name])
+            tab_item.add_widget(scrollview)
             self.root.ids.tp_main.add_widget(tab_item)
 
         # and enable the save button and the firmware tab

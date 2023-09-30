@@ -44,7 +44,7 @@ class AM32Connector:
 
     FLASH_START_ADDRESS = 4096
     CHUNK_SIZE = 128
-    EEPROM_SIZE = 48
+    EEPROM_MAX_SIZE = 1024
 
     def __init__(self, serial_port_instance=None, baudrate=19200, wait_after_write=0.025):
         self.baudrate = baudrate
@@ -77,25 +77,37 @@ class AM32Connector:
         if self.esc_type is None:
             raise FileNotFoundError("No ESC connected!")
 
-        if len(eeprom_bytearray) != self.EEPROM_SIZE:
-            print("eeprom size mismatch, %s expected, %s received" % (self.EEPROM_SIZE, len(eeprom_bytearray)))
+        eeprom_size = len(eeprom_bytearray)
+
+        if eeprom_size > self.EEPROM_MAX_SIZE:
+            print("eeprom size mismatch, %s max expected, %s received" % (self.EEPROM_MAX_SIZE, len(eeprom_bytearray)))
             raise ValueError(
-                "eeprom size mismatch, %s expected, %s received" % (self.EEPROM_SIZE, len(eeprom_bytearray))
+                "eeprom size mismatch, %s max expected, %s received" % (self.EEPROM_MAX_SIZE, len(eeprom_bytearray))
             )
 
-        tries = 0
-        while True:
-            res = self._send_direct(eeprom_bytearray, self.eeprom_address, send_eeprom=True)
-            if res == len(eeprom_bytearray):
-                print("eeprom written successfully")
-                return res
-            else:
-                print("Retrying!")
+        if eeprom_size % self.CHUNK_SIZE != 0:
+            print("eeprom size must be dividable by %s, yours: (%s) is not" % (self.CHUNK_SIZE, len(eeprom_bytearray)))
+            raise ValueError(
+                "eeprom size must be dividable by %s, yours: (%s) is not" % (self.CHUNK_SIZE, len(eeprom_bytearray))
+            )
 
-            tries += 1
-            if tries > self.ESC_SEND_RETRIES:
-                print("Max retries reached writing eeprom!")
-                raise ConnectionError("ESC communication problem!")
+        eeprom_num_chunks = int(eeprom_size / self.CHUNK_SIZE)
+        sent_data = 0
+        for i in range(eeprom_num_chunks):
+            tries = 0
+            while True:
+                res = self._send_direct(eeprom_bytearray[(i * self.CHUNK_SIZE):((i + 1) * self.CHUNK_SIZE)],
+                                        self.eeprom_address + (i * self.CHUNK_SIZE), send_eeprom=True)
+                if res == self.CHUNK_SIZE:
+                    print("eeprom chunk written successfully")
+                    break
+                else:
+                    print("Retrying!")
+
+                tries += 1
+                if tries > self.ESC_SEND_RETRIES:
+                    print("Max retries reached writing eeprom!")
+                    raise ConnectionError("ESC communication problem!")
 
     def write_firmware(self, filename):
         if self.esc_type is None:
@@ -134,7 +146,11 @@ class AM32Connector:
         return int((self.chunks_written / self._flash_file_num_chunks) * 100)
 
     def cmd_read_eeprom(self):
-        return self._read_direct(self.EEPROM_SIZE, self.eeprom_address, read_eeprom=True)
+        num_chunks = int(self.EEPROM_MAX_SIZE / self.CHUNK_SIZE)
+        data = bytearray()
+        for i in range(num_chunks):
+            data += self._read_direct(self.CHUNK_SIZE, self.eeprom_address + (i * self.CHUNK_SIZE), read_eeprom=True)
+        return data
 
     def _receive_ack(self):
         """

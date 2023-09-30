@@ -171,17 +171,28 @@ class AM32eeprom:
          "label": "input mode selector"},
         {"byte_number": 47, "app_page": "hide", "name": "unused", "description": "not used", "type": "boolean",
          "min_value": 0, "max_value": 1, "default_value": 0, "scaling_factor": 1, "offset": 0, "label": "unused"},
+        {"byte_number": 512, "app_page": "MPPT", "name": "enable_mppt", "description": "use mppt control",
+         "type": "boolean", "min_value": 0, "max_value": 1, "default_value": 0, "scaling_factor": 1, "offset": 0, "label": "unused"},
+        {"byte_number": 513, "app_page": "MPPT", "name": "mppt_voltage", "description": "mppt target voltage",
+         "type": "number", "min_value": 0, "max_value": 255, "default_value": 20, "scaling_factor": 0.04, "offset": 5.5, "label": "MPPT voltage"},
     ]
 
     def __init__(self, eeprom_bytearray=None):
-        # create an empty list of correct sise
-        self.EEPROM = [None] * len(self.EEPROM_INFO)
+        # create an empty list of correct size
+        # find highest byte number:
+        max_byte_number = 0
+        for byte_info in self.EEPROM_INFO:
+            if byte_info["byte_number"] > max_byte_number:
+                max_byte_number = byte_info["byte_number"]
+
+        self.EEPROM = [0] * (max_byte_number + 1)
 
         if eeprom_bytearray is None:
             # default value load
             for byte_info in self.EEPROM_INFO:
                 self.EEPROM[byte_info["byte_number"]] = byte_info["default_value"]
         else:
+            self.EEPROM = [0] * len(eeprom_bytearray)
             for i in range(len(eeprom_bytearray)):
                 self.EEPROM[i] = eeprom_bytearray[i]
 
@@ -191,18 +202,36 @@ class AM32eeprom:
     def get_eeprom_byte_info_list(self):
         return self.EEPROM_INFO
 
-    def __setitem__(self, key, value):
-        if self.EEPROM_INFO[key]["min_value"] <= value <= self.EEPROM_INFO[key]["max_value"]:
-            self.EEPROM[key] = int(value)
+    def _get_index_of_bytenumber(self, byte_number):
+
+        for i in range(len(self.EEPROM_INFO)):
+            if self.EEPROM_INFO[i]["byte_number"] == byte_number:
+                return i
+        return None
+
+    def __setitem__(self, byte_number, value):
+        index = self._get_index_of_bytenumber(byte_number)
+        if index is None:
+            raise IndexError("%s is not in EEPROM_INFO" % byte_number)
+
+        if self.EEPROM_INFO[index]["min_value"] <= value <= self.EEPROM_INFO[index]["max_value"]:
+            self.EEPROM[byte_number] = int(value)
 
     def scale_value(self, byte_number, value):
-        return (int(value) * self.EEPROM_INFO[byte_number]["scaling_factor"]) + self.EEPROM_INFO[byte_number]["offset"]
+        index = self._get_index_of_bytenumber(byte_number)
+        if index is None:
+            raise IndexError("%s is not in EEPROM_INFO" % byte_number)
 
-    def __getitem__(self, key):
-        return self.EEPROM[key]
+        return (int(value) * self.EEPROM_INFO[index]["scaling_factor"]) + self.EEPROM_INFO[index]["offset"]
+
+    def __getitem__(self, byte_number):
+        return self.EEPROM[byte_number]
 
     def get_byte_info(self, byte_number):
-        return self.EEPROM_INFO[byte_number]
+        index = self._get_index_of_bytenumber(byte_number)
+        if index is None:
+            raise IndexError("%s is not in EEPROM_INFO" % byte_number)
+        return self.EEPROM_INFO[index]
 
     def __repr__(self):
         # just optics....
