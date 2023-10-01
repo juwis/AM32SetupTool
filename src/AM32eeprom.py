@@ -172,11 +172,11 @@ class AM32eeprom:
         {"byte_number": 47, "app_page": "hide", "name": "unused", "description": "not used", "type": "boolean",
          "min_value": 0, "max_value": 1, "default_value": 0, "scaling_factor": 1, "offset": 0, "label": "unused"},
 
-        {"byte_number": 512, "app_page": "hide", "name": "mppt_magic_byte", "description": "eeprom_written_mppt",
+        {"byte_number": 513, "app_page": "hide", "name": "mppt_magic_byte", "description": "eeprom_written_mppt",
          "type": "number", "min_value": 0, "max_value": 255, "default_value": int(0x55), "scaling_factor": 1, "offset": 0, "label": "mppt_magic"},
-        {"byte_number": 513, "app_page": "MPPT", "name": "enable_mppt", "description": "use mppt control",
+        {"byte_number": 514, "app_page": "MPPT", "name": "enable_mppt", "description": "use mppt control",
          "type": "boolean", "min_value": 0, "max_value": 1, "default_value": 0, "scaling_factor": 1, "offset": 0, "label": "enable MPPT controller"},
-        {"byte_number": 514, "app_page": "MPPT", "name": "mppt_voltage", "description": "mppt target voltage",
+        {"byte_number": 515, "app_page": "MPPT", "name": "mppt_voltage", "description": "mppt target voltage",
          "type": "number", "min_value": 0, "max_value": 255, "default_value": 0, "scaling_factor": 0.04, "offset": 5.5, "label": "MPPT voltage"},
     ]
     FULL_EEPROM_SIZE = 512+128
