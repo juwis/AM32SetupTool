@@ -111,9 +111,9 @@ class AM32SetupToolApp(App):
                     self.text_info_list[i].text = self.eeprom.scale_value(i, value).__str__()
 
         for i in range(len(self.checkbox_list)):
-                if self.checkbox_list[i] is instance:
-                    print("config_on_value: %s / %s" % (instance.active, i))
-                    self.eeprom[i] = int(instance.active)
+            if self.checkbox_list[i] is instance:
+                print("config_on_value: %s / %s" % (instance.active, i))
+                self.eeprom[i] = int(instance.active)
 
     def callback_button_serial_device(self, instance):
         print("callback_button_serial_device", self, instance.text)
@@ -123,8 +123,16 @@ class AM32SetupToolApp(App):
         self.connect_esc()
         print("connect esc done")
 
+        # load eeprom from esc
+        eeprom_data = self.esc.cmd_read_eeprom()
+        # check eeprom for correct version
+        test_eeprom = AM32eeprom()
         # after connecting, update the local eeprom data with the real data from the esc
-        self.eeprom = AM32eeprom(eeprom_bytearray=self.esc.cmd_read_eeprom())
+        if test_eeprom[1] == eeprom_data[1]:
+            self.eeprom = AM32eeprom(eeprom_bytearray=eeprom_data)
+        else:
+            # eeprom version did not match
+            self.write_default_eeprom()
 
         # no more need to connect a device, disable buttons
         self.root.ids.bl_usb_serial_devices.clear_widgets()
@@ -142,7 +150,17 @@ class AM32SetupToolApp(App):
 
         # and enable the save button and the firmware tab
         self.root.ids.b_save_to_esc.disabled = False
+        self.root.ids.b_write_default_eeprom.disabled = False
         self.root.ids.tpi_firmware.disabled = False
+
+    def write_default_eeprom(self):
+        # eeprom version did not match, load default eeprom
+        self.eeprom = AM32eeprom()
+        # and write it
+        self.esc.write_eeprom(self.eeprom.get_eeprom_bytearray())
+
+    def callback_button_write_default_eeprom(self, instance):
+        self.write_default_eeprom()
 
     def callback_button_fw_file(self, instance):
         self.content = LoadDialog(load=self.load_fw_file, cancel=self.dismiss_popup)
@@ -170,6 +188,7 @@ class AM32SetupToolApp(App):
     def callback_button_flash_fw_file(self, instance):
         # disable flash button and save button to prevent threading chaos
         self.root.ids.b_flash_firmware_file.disabled = True
+        self.root.ids.b_write_default_eeprom.disabled = True
         self.root.ids.b_save_to_esc.disabled = True
 
         threading.Thread(target=self.esc.write_firmware, args=(self.fw_file_full_path,)).start()
@@ -182,6 +201,7 @@ class AM32SetupToolApp(App):
         if percent_done == 100:
             self.root.ids.l_flash_fw_filename.text = "Flash written!"
             self.root.ids.b_save_to_esc.disabled = False
+            self.root.ids.b_write_default_eeprom.disabled = False
             return False
         else:
             return True

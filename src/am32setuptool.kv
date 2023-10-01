@@ -41,6 +41,11 @@
                         max: 100
                         value: 0
                     Button:
+                        id: b_write_default_eeprom
+                        text: "write default eeprom"
+                        disabled: True
+                        on_press: app.callback_button_write_default_eeprom(self)
+                    Button:
                         id: b_flash_firmware_file
                         text: "flash firmware"
                         disabled: True
