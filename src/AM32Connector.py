@@ -44,7 +44,8 @@ class AM32Connector:
 
     FLASH_START_ADDRESS = 4096
     CHUNK_SIZE = 128
-    EEPROM_MAX_SIZE = 1024
+    EEPROM_CHUNK_SIZE = 128
+    EEPROM_MAX_SIZE = 512+128
 
     def __init__(self, serial_port_instance=None, baudrate=19200, wait_after_write=0.025):
         self.baudrate = baudrate
@@ -86,19 +87,20 @@ class AM32Connector:
             )
 
         if eeprom_size % self.CHUNK_SIZE != 0:
-            print("eeprom size must be dividable by %s, yours: (%s) is not" % (self.CHUNK_SIZE, len(eeprom_bytearray)))
+            print("eeprom size must be dividable by %s, yours: (%s) is not" % (self.EEPROM_CHUNK_SIZE, len(eeprom_bytearray)))
             raise ValueError(
-                "eeprom size must be dividable by %s, yours: (%s) is not" % (self.CHUNK_SIZE, len(eeprom_bytearray))
+                "eeprom size must be dividable by %s, yours: (%s) is not" % (self.EEPROM_CHUNK_SIZE, len(eeprom_bytearray))
             )
 
-        eeprom_num_chunks = int(eeprom_size / self.CHUNK_SIZE)
-        sent_data = 0
+        eeprom_num_chunks = int(eeprom_size / self.EEPROM_CHUNK_SIZE)
+
         for i in range(eeprom_num_chunks):
             tries = 0
             while True:
-                res = self._send_direct(eeprom_bytearray[(i * self.CHUNK_SIZE):((i + 1) * self.CHUNK_SIZE)],
-                                        self.eeprom_address + (i * self.CHUNK_SIZE), send_eeprom=True)
-                if res == self.CHUNK_SIZE:
+                data = eeprom_bytearray[(i * self.EEPROM_CHUNK_SIZE):((i + 1) * self.EEPROM_CHUNK_SIZE)]
+                print(data)
+                res = self._send_direct(data, self.eeprom_address + (i * self.EEPROM_CHUNK_SIZE), send_eeprom=True)
+                if res == self.EEPROM_CHUNK_SIZE:
                     print("eeprom chunk written successfully")
                     break
                 else:
@@ -146,10 +148,14 @@ class AM32Connector:
         return int((self.chunks_written / self._flash_file_num_chunks) * 100)
 
     def cmd_read_eeprom(self):
-        num_chunks = int(self.EEPROM_MAX_SIZE / self.CHUNK_SIZE)
+        num_chunks = int(self.EEPROM_MAX_SIZE / self.EEPROM_CHUNK_SIZE)
         data = bytearray()
         for i in range(num_chunks):
-            data += self._read_direct(self.CHUNK_SIZE, self.eeprom_address + (i * self.CHUNK_SIZE), read_eeprom=True)
+            read_address = self.eeprom_address + (i * self.EEPROM_CHUNK_SIZE)
+            print("Read eeprom: %s / %X" % (len(data), read_address))
+            new_data = self._read_direct(self.EEPROM_CHUNK_SIZE, read_address, read_eeprom=True)
+            data += new_data
+            print(new_data)
         return data
 
     def _receive_ack(self):

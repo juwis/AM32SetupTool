@@ -94,14 +94,24 @@ class AM32SetupToolApp(App):
         self.root.ids.b_save_to_esc.text = "writing EEPROM"
         Clock.schedule_once(self.callback_write_eeprom)
 
+    def callback_button_write_default_eeprom(self, instance):
+        print("callback_button_save", self, instance.state)
+        self.root.ids.b_save_to_esc.disabled = True
+        self.root.ids.b_write_default_eeprom.disabled = True
+        self.root.ids.b_write_default_eeprom.text = "writing DEFAULT EEPROM"
+        # create a clean eeprom
+        self.eeprom = AM32eeprom()
+        Clock.schedule_once(self.callback_write_eeprom)
+
     def callback_write_eeprom(self, dt):
         try:
             self.esc.write_eeprom(self.eeprom.get_eeprom_bytearray())
         except Exception as e:
             print("Exception: %s" % str(e))
+        self.root.ids.b_write_default_eeprom.disabled = False
         self.root.ids.b_save_to_esc.disabled = False
         self.root.ids.b_save_to_esc.text = "save changes"
-
+        self.root.ids.b_write_default_eeprom.text = "write DEFAULT EEPROM"
 
     def callback_button_update_usb_list(self, instance):
         print("callback_button_update_usb_list", self, instance.state)
@@ -150,6 +160,7 @@ class AM32SetupToolApp(App):
 
         # and enable the save button and the firmware tab
         self.root.ids.b_save_to_esc.disabled = False
+        self.root.ids.b_write_default_eeprom.disabled = False
         self.root.ids.tpi_firmware.disabled = False
 
     def callback_button_fw_file(self, instance):
@@ -187,6 +198,7 @@ class AM32SetupToolApp(App):
         percent_done = self.esc.get_flash_done_percentage()
         print(percent_done)
         self.root.ids.pb_flash_fw_file.value = percent_done
+        self.root.ids.l_flash_fw_filename.text = "Flashing..... %s%%" % percent_done
         if percent_done == 100:
             self.root.ids.l_flash_fw_filename.text = "Flash written!"
             self.root.ids.b_save_to_esc.disabled = False

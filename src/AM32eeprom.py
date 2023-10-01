@@ -171,11 +171,15 @@ class AM32eeprom:
          "label": "input mode selector"},
         {"byte_number": 47, "app_page": "hide", "name": "unused", "description": "not used", "type": "boolean",
          "min_value": 0, "max_value": 1, "default_value": 0, "scaling_factor": 1, "offset": 0, "label": "unused"},
-        {"byte_number": 512, "app_page": "MPPT", "name": "enable_mppt", "description": "use mppt control",
-         "type": "boolean", "min_value": 0, "max_value": 1, "default_value": 0, "scaling_factor": 1, "offset": 0, "label": "unused"},
-        {"byte_number": 513, "app_page": "MPPT", "name": "mppt_voltage", "description": "mppt target voltage",
-         "type": "number", "min_value": 0, "max_value": 255, "default_value": 20, "scaling_factor": 0.04, "offset": 5.5, "label": "MPPT voltage"},
+
+        {"byte_number": 512, "app_page": "hide", "name": "mppt_magic_byte", "description": "eeprom_written_mppt",
+         "type": "number", "min_value": 0, "max_value": 255, "default_value": int(0x55), "scaling_factor": 1, "offset": 0, "label": "mppt_magic"},
+        {"byte_number": 513, "app_page": "MPPT", "name": "enable_mppt", "description": "use mppt control",
+         "type": "boolean", "min_value": 0, "max_value": 1, "default_value": 0, "scaling_factor": 1, "offset": 0, "label": "enable MPPT controller"},
+        {"byte_number": 514, "app_page": "MPPT", "name": "mppt_voltage", "description": "mppt target voltage",
+         "type": "number", "min_value": 0, "max_value": 255, "default_value": 0, "scaling_factor": 0.04, "offset": 5.5, "label": "MPPT voltage"},
     ]
+    FULL_EEPROM_SIZE = 512+128
 
     def __init__(self, eeprom_bytearray=None):
         # create an empty list of correct size
@@ -185,11 +189,12 @@ class AM32eeprom:
             if byte_info["byte_number"] > max_byte_number:
                 max_byte_number = byte_info["byte_number"]
 
-        self.EEPROM = [0] * (max_byte_number + 1)
+        self.EEPROM = [0x00] * self.FULL_EEPROM_SIZE
 
         if eeprom_bytearray is None:
             # default value load
             for byte_info in self.EEPROM_INFO:
+                print(byte_info["byte_number"] , byte_info["default_value"])
                 self.EEPROM[byte_info["byte_number"]] = byte_info["default_value"]
         else:
             self.EEPROM = [0] * len(eeprom_bytearray)

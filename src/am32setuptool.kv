@@ -45,6 +45,11 @@
                         text: "flash firmware"
                         disabled: True
                         on_press: app.callback_button_flash_fw_file(self)
+                    Button:
+                        id: b_write_default_eeprom
+                        text: "write_default_eeprom"
+                        disabled: True
+                        on_press: app.callback_button_write_default_eeprom(self)
 
         Button:
             id: b_save_to_esc
