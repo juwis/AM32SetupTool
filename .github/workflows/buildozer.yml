@@ -1,9 +1,9 @@
 name: Build
 on:
   push:
-    branches: [ main ]
+    branches: [ android ]
   pull_request:
-    branches: [ main ]
+    branches: [ android ]
 
 jobs:
   # Build job. Builds app for Android with Buildozer
