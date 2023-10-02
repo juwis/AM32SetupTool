@@ -4,7 +4,7 @@
 title = AM32 ESC Configurator
 
 # (str) Package name
-package.name = am32conf
+package.name = am32setuptool
 
 # (str) Package domain (needed for android/ios packaging)
 package.domain = org.am32
