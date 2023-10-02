@@ -43,7 +43,7 @@ android.extra_manifest_xml = manifest/extra_manifest.xml
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy,pyjnius,usb4a,usbserial4a,serial
+requirements = python3,kivy,pyjnius,usb4a,usbserial4a
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
