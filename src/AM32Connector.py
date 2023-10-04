@@ -46,7 +46,7 @@ class AM32Connector:
     CHUNK_SIZE = 128
     EEPROM_SIZE = 48
 
-    def __init__(self, serial_port_instance=None, baudrate=19200, wait_after_write=0.025):
+    def __init__(self, serial_port_instance, baudrate=19200, wait_after_write=0.025):
         self.baudrate = baudrate
         self.wait_after_write = wait_after_write
         self.serial_port = serial_port_instance     # serial_device_name of serial.Serial()
@@ -62,7 +62,8 @@ class AM32Connector:
         self._flash_file_num_chunks = 0
         self._flash_file_name = ""
         self.chunks_written = 0
-
+        if self.serial_port is None:
+            raise ConnectionError("Serial Port is None")
         self._init_esc()
 
     def _load_bin_to_chunks(self, filename):
