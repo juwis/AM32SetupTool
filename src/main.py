@@ -36,6 +36,7 @@ if platform == 'android':
 else:
     from serial.tools import list_ports
     from serial import Serial
+    from serial.serialutil import SerialException
 
 from AM32eeprom import AM32eeprom
 from AM32Connector import AM32Connector
@@ -140,6 +141,9 @@ class AM32SetupToolApp(App):
         serial_device_name = instance.text
         self.open_serial_port(serial_device_name)
         print("SERIAL open done")
+        if self.serial_port is None:
+            self.root.ids.l_usb_devices.text = "ERR: TIMEOUT (%s)" % serial_device_name
+            return
         self.connect_esc()
         print("connect esc done")
 
@@ -247,14 +251,17 @@ class AM32SetupToolApp(App):
                 timeout=1
             )
         else:
-            self.serial_port = Serial(
-                device_name,
-                19200,
-                8,
-                'N',
-                1,
-                timeout=1
-            )
+            try:
+                self.serial_port = Serial(
+                    device_name,
+                    19200,
+                    8,
+                    'N',
+                    1,
+                    timeout=1
+                )
+            except SerialException:
+                self.serial_port = None
 
     def connect_esc(self):
         self.esc = AM32Connector(serial_port_instance=self.serial_port)
