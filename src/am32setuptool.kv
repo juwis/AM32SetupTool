@@ -16,7 +16,8 @@
                     Button:
                         id: b_update_usb_list
                         text: "Update USB Adapter List"
-                        on_press: app.callback_button_update_usb_list(self)
+                        on_press: app.callback_button_fw_file(self)
+#                        on_press: app.callback_button_update_usb_list(self)
                     Label:
                         id: l_usb_devices
                         text: "no Adapter found"
@@ -63,6 +64,10 @@
         size: root.size
         pos: root.pos
         orientation: "vertical"
+        BoxLayout:
+            size_hint_y: 0.2
+            orientation: "horizontal"
+            id: disk_drives
         FileChooserListView:
             id: filechooser
             filters: ["*.bin"]

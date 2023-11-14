@@ -57,6 +57,26 @@ class LoadDialog(FloatLayout):
     load = ObjectProperty(None)
     cancel = ObjectProperty(None)
 
+    def __init__(self, **kwargs):
+        super(LoadDialog, self).__init__(**kwargs)
+        for drive in self.get_win_drives():
+            self.ids.disk_drives.add_widget(Button(text=drive, on_press=self.drive_selection_changed))
+
+    def get_win_drives(self):
+        if os.name == 'nt':
+            import win32api
+
+            drives = win32api.GetLogicalDriveStrings()
+            drives = drives.split('\000')[:-1]
+
+            return drives
+        else:
+            return []
+
+    def drive_selection_changed(self, instance):
+        selected_item = instance.text
+        self.ids.filechooser.path = selected_item
+
 
 def get_download_path():
     """Returns the default downloads path for linux or windows"""
